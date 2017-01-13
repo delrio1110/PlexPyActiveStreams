@@ -5,17 +5,17 @@ using System.Windows.Forms;
 
 namespace PlexPyActiveStreams
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
         iniHandler iniSettings;
         static string activeStreams = "0";
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
             iniSettings = new iniHandler();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void MainForm_Load(object sender, EventArgs e)
         {
             if (!System.IO.File.Exists("PlexPyActiveStreams.ini"))
             {
@@ -49,13 +49,17 @@ namespace PlexPyActiveStreams
 
         private void getActiveStreams()
         {
+            string oldactiveStreams = activeStreams;
             using (var webClient = new System.Net.WebClient())
-            {
+            {               
                 string url = "http://" + txtPPIP.Text + "/api/v2?apikey=" + txtPPAPI.Text + "&cmd=get_activity";
                 string json = webClient.DownloadString(url);
                 txtPPOutput.Text = json;
                 dynamic data = JObject.Parse(json);
-                activeStreams = data.response.data.stream_count;
+                activeStreams = data.response.data.stream_count;             
+            }
+            if (activeStreams != oldactiveStreams)
+            {
                 notifyIcon.Icon = updateIcon(activeStreams);
             }
         }
@@ -83,7 +87,7 @@ namespace PlexPyActiveStreams
             return createdIcon;
         }
 
-        private void Form1_Resize(object sender, EventArgs e)
+        private void MainForm_Resize(object sender, EventArgs e)
         {
             if (FormWindowState.Minimized == this.WindowState)
             {
@@ -104,5 +108,22 @@ namespace PlexPyActiveStreams
             this.WindowState = FormWindowState.Normal;
         }
 
+        private void openPlexPyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("http:////" + iniSettings.Read("PPIP"));
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void notifyIcon_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                notifyIconContextMenu.Show(Cursor.Position);
+            }
+        }
     }
 }
